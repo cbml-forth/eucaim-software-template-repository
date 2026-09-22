@@ -1,0 +1,17 @@
+[project]
+name = "dlnr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Stelios G. Sfakianakis", email = "sgsfak@gmail.com" }
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy<2.0",
+    "protobuf==3.19.4",
+    "scikit-image>=0.24.0",
+    "simpleitk>=2.5.6",
+    "tensorflow==2.8",
+]
+
