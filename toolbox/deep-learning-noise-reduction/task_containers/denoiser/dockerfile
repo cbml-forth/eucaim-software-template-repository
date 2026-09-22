@@ -56,7 +56,7 @@ RUN mkdir -p input_data output_data
 COPY ./entrypoint.sh entrypoint.sh
 
 # Set any necessary executable permissions for non-root user
-#RUN chown -R root:root /app && chmod 755 /app/main.py /app/entrypoint.sh
+RUN chmod 755 /denoiser/entrypoint.sh
 
 ENTRYPOINT ["/denoiser/entrypoint.sh"]
 CMD ["--input-dir", "./input_data", "--output-dir", "./output_data"]
