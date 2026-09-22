@@ -21,7 +21,7 @@ is named after the **patient directory**, not after the input file, so
 docker run --rm \
   -v "$PWD/test/example_input:/data/in:ro" \
   -v "$PWD/test/example_output:/data/out" \
-  harbor.eucaim.cancerimage.eu/processing-tools/raclahe:latest \
+  harbor.eucaim.cancerimage.eu/processing-tools/raclahe:3.0-fem \
   -i /data/in -o /data/out
 ```
 

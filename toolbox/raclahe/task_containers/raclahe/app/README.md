@@ -26,7 +26,7 @@ learning;U-Net;Prostatic zones}
 
 First go to the dir, eg. `cd raclahe`
 
-Build container: `sudo docker build -t raclahe -f dockerfile .`
+Build container: `sudo docker build -t raclahe:3.0-fem -f dockerfile .`
 
 Run container:
 
@@ -34,7 +34,7 @@ Run container:
 docker run \
    -v /your/path/of/input_data:/input \
    -v /your/output/folder:/output \
-   raclahe --input-dir /input --output-dir /output
+   raclahe:3.0-fem --input-dir /input --output-dir /output
 ```
 
 eg. /your/path/of/input_data - provide the path for your data
@@ -70,7 +70,7 @@ The dockerfile downloads it during the build and checks its SHA-256, so an
 ordinary `docker build` needs no extra step. To build from a different location:
 
 ```
-docker build -f dockerfile --build-arg RACLAHE_WEIGHTS_URL=<url> -t raclahe .
+docker build -f dockerfile --build-arg RACLAHE_WEIGHTS_URL=<url> -t raclahe:3.0-fem .
 ```
 
 If the weights are missing at run time the container exits non-zero with

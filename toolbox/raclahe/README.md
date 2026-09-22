@@ -40,7 +40,7 @@ A single task container, `raclahe`.
 
 | Item | Value |
 | --- | --- |
-| Harbor image | `harbor.eucaim.cancerimage.eu/processing-tools/raclahe:latest` |
+| Harbor image | `harbor.eucaim.cancerimage.eu/processing-tools/raclahe:3.0-fem` |
 | Base image | `python:3.8-slim` (TensorFlow 2.2.0 publishes no wheels for Python 3.9+) |
 | Platform | `linux/amd64` |
 | Working directory | `/raclahe` |
@@ -52,7 +52,7 @@ Build:
 
 ```bash
 cd task_containers/raclahe
-docker build --platform linux/amd64 -f dockerfile -t raclahe:3.0 .
+docker build --platform linux/amd64 -f dockerfile -t raclahe:3.0-fem .
 ```
 
 The model weights are downloaded during the build and verified against their
@@ -111,7 +111,7 @@ provider. Point the build at any location that serves the file:
 
 ```bash
 docker build --platform linux/amd64 -f dockerfile \
-  --build-arg RACLAHE_WEIGHTS_URL=<url> -t raclahe:3.0 .
+  --build-arg RACLAHE_WEIGHTS_URL=<url> -t raclahe:3.0-fem .
 ```
 
 For a fully offline build, serve a local copy:
@@ -120,7 +120,7 @@ For a fully offline build, serve a local copy:
 python3 -m http.server 8877 --directory /path/holding/the/h5
 docker build --platform linux/amd64 -f dockerfile \
   --build-arg RACLAHE_WEIGHTS_URL=http://host.docker.internal:8877/checkpoint_external.h5 \
-  -t raclahe:3.0 .
+  -t raclahe:3.0-fem .
 ```
 
 The weights are baked into the published Harbor image, so nothing is downloaded

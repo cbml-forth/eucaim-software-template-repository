@@ -40,6 +40,6 @@ dependencies: []
 
 metadata:
   author: James Zaridis, FORTH
-  version: "3.0"
+  version: "3.0-fem"
   orchestrator:
     additional_metadata: {}

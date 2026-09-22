@@ -10,7 +10,7 @@ doc: >-
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/raclahe:latest
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/raclahe:3.0-fem
   - class: ResourceRequirement
     coresMin: 2
     ramMin: 8192
@@ -59,6 +59,6 @@ expectedExitCode: 0
 
 metadata:
   author: James Zaridis, FORTH
-  version: "3.0"
+  version: "3.0-fem"
   orchestrator:
     network: overlay

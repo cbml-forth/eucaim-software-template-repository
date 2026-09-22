@@ -2,6 +2,13 @@
 # Python 3.8 is required: tensorflow 2.2.0 publishes no wheels for 3.9+.
 FROM python:3.8-slim
 
+LABEL org.opencontainers.image.title="raclahe" \
+      org.opencontainers.image.version="3.0-fem" \
+      org.opencontainers.image.description="Region Adaptive CLAHE enhancement for prostate T2-Weighted MR images" \
+      org.opencontainers.image.source="https://github.com/dzaridis/RACLAHE_Image_Enhancement_for_CNN_model_segmentation" \
+      org.opencontainers.image.licenses="EUPL-1.2" \
+      org.opencontainers.image.authors="James Zaridis, FORTH <dimzaridis@gmail.com>"
+
 # Copy the uv binary directly from the official Astral image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
