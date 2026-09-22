@@ -1,0 +1,76 @@
+# Use a slim base image to significantly reduce image size.
+# Python 3.8 is required: tensorflow 2.2.0 publishes no wheels for 3.9+.
+FROM python:3.8-slim
+
+# Copy the uv binary directly from the official Astral image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Environment variables setup
+ENV DEBIAN_FRONTEND=noninteractive \
+    TF_CPP_MIN_LOG_LEVEL=3 \
+    KMP_AFFINITY=noverbose \
+    GIT_PYTHON_REFRESH=quiet \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/raclahe/.venv/bin:$PATH"
+
+# Set defaults for build arguments
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Create non-root user and group, and prevent login
+RUN groupadd -g $USER_GID eucaim && \
+    useradd -r -u $USER_UID -g eucaim -d /home/eucaim -m -s /usr/sbin/nologin eucaim
+
+# Install system dependencies with cache mounting and cleanup
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    gosu \
+    build-essential \
+    ca-certificates \
+    curl \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /raclahe
+
+# Install Python dependencies first to maximize Docker layer caching
+COPY app/pyproject.toml app/uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+
+# Copy application files
+COPY app/raclahe.py ./
+COPY app/utils/ ./utils/
+
+# The bounding-box U-Net weights (415 MB) are NOT stored in git: this
+# repository is a public fork, and GitHub refuses Git LFS uploads to forks.
+# They are fetched at build time instead and verified against their checksum.
+#
+# Override the source without editing this file:
+#   docker build --build-arg RACLAHE_WEIGHTS_URL=<url> -f dockerfile .
+#
+# A local copy can be served for an offline build, e.g.
+#   python3 -m http.server 8000 --directory /path/holding/the/h5
+#   docker build --build-arg RACLAHE_WEIGHTS_URL=http://host.docker.internal:8000/checkpoint_external.h5 ...
+ARG RACLAHE_WEIGHTS_URL=https://media.githubusercontent.com/media/dzaridis/RACLAHE_Image_Enhancement_for_CNN_model_segmentation/main/bbox_weights/checkpoint_external.h5
+ARG RACLAHE_WEIGHTS_SHA256=bb6eba7922fa964188aabd2232c115445c4e94e1f41d51ccdc055585662ad8ee
+RUN mkdir -p bbox_weights && \
+    echo "Fetching model weights from ${RACLAHE_WEIGHTS_URL}" && \
+    curl -fSL --retry 3 --retry-delay 5 \
+         -o bbox_weights/checkpoint_external.h5 "${RACLAHE_WEIGHTS_URL}" && \
+    echo "${RACLAHE_WEIGHTS_SHA256}  bbox_weights/checkpoint_external.h5" | sha256sum -c -
+
+# Ensure input and output directories exist
+RUN mkdir -p input_data output_data
+
+COPY ./entrypoint.sh entrypoint.sh
+
+# Set any necessary executable permissions for non-root user
+RUN chmod 755 /raclahe/entrypoint.sh
+
+ENTRYPOINT ["/raclahe/entrypoint.sh"]
+CMD ["--input-dir", "./input_data", "--output-dir", "./output_data"]

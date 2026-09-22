@@ -1,0 +1,30 @@
+[project]
+name = "raclahe"
+version = "3.0.0"
+description = "Region Adaptive CLAHE enhancement for prostate T2-Weighted MR images"
+readme = "README.md"
+authors = [
+    { name = "James Zaridis", email = "dimzaridis@gmail.com" }
+]
+requires-python = ">=3.8,<3.9"
+dependencies = [
+    "keras-unet-collection==0.1.11",
+    "nibabel==3.2.1",
+    "numpy==1.19.5",
+    "opencv-python-headless==4.5.1.48",
+    "pandas==1.4.0",
+    "protobuf==3.20.1",
+    "pydicom",
+    "scikit-image==0.19.1",
+    # tensorflow 2.2.0 pins scipy==1.4.1; leaving it unpinned resolves to a
+    # version that is incompatible with it.
+    "scipy==1.4.1",
+    "simpleitk==2.3.1",
+    "tensorflow==2.2.0",
+]
+
+[tool.uv]
+# EUCAIM compute nodes are linux/amd64. Resolving for arm64 as well is not
+# possible here: pandas 1.4.0 requires numpy>=1.20 on arm64, while
+# tensorflow 2.2.0 pins numpy==1.19.5.
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]

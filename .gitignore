@@ -1,0 +1,6 @@
+# Large model weights are distributed with the container image, not in git.
+# See toolbox/raclahe/task_containers/raclahe/README.md
+toolbox/raclahe/task_containers/raclahe/app/bbox_weights/*.h5
+
+# macOS
+.DS_Store
