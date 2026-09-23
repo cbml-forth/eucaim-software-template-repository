@@ -520,8 +520,6 @@ def write_evaluation_report(data_org, r, c, features_total, metas_features, pos_
             c3=c3+1            
         c1=c1+1
     
-    if not os.path.exists('results'):
-        os.makedirs('results')
     
     width_off = 40
     sheet1.column_dimensions['A'].width = width_off+10
@@ -904,8 +902,6 @@ def write_curated_dataset(data_org, wb2, pos_metas, features_total, features_sta
                             sheet1.cell(i+2,j+1,formatNumber_v3(str(sheet.cell(i+2,j+1).value).strip()))
             c2 = c2+1
             
-    if not os.path.exists('results'):
-        os.makedirs('results')
     
     wb.save(path_f)
 
@@ -1190,8 +1186,6 @@ def write_curated_dataset_v2(data_org, wb2, pos_metas, features_total, features_
                             sheet1.cell(i+2,c3,formatNumber_v3(str(sheet.cell(i+2,c3).value).strip()))
             c2 = c2+1
     
-    if not os.path.exists('results'):
-        os.makedirs('results')
     
     wb.save(path_f)
 

@@ -42,6 +42,9 @@ inputs:
     required: false
     hidden: false
     source: user
+    constraints:
+      min: 1
+      max: 7
     inputBinding:
       prefix: --outlier-method
       separate: true
@@ -53,6 +56,9 @@ inputs:
     required: false
     hidden: false
     source: user
+    constraints:
+      min: 1
+      max: 5
     inputBinding:
       prefix: --similarity-method
       separate: true
@@ -64,6 +70,9 @@ inputs:
     required: false
     hidden: false
     source: user
+    constraints:
+      min: 1
+      max: 4
     inputBinding:
       prefix: --imputation-method
       separate: true
@@ -75,7 +84,7 @@ outputs:
     outputBinding:
       glob: $(inputs.output_dir_name)
 
-baseCommand: [] # entrypoint has the `python3 main.py` command so you just need to pass the additional parameters only
+baseCommand: [python3, main.py]
 
 expectedExitCode: 0
 
