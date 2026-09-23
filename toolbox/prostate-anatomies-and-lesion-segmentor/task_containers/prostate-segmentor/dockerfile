@@ -1,0 +1,130 @@
+# syntax=docker/dockerfile:1.6
+# ---------- Stage 1: builder ----------
+FROM nvcr.io/nvidia/cuda:11.7.0-cudnn8-devel-ubuntu20.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        software-properties-common \
+        ca-certificates \
+        curl && \
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3.9 \
+        python3.9-dev \
+        python3.9-distutils \
+        python3.9-venv \
+        build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Build everything inside an isolated venv so transitive deps cannot be skipped.
+RUN python3.9 -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+
+COPY app/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+# ---------- Stage 2: model weights ----------
+# The nnU-Net and ProLesA-Net weights (~1.1 GB) are NOT stored in this
+# repository: it is a public fork of EUCAIM/software-template-repository, and
+# GitHub refuses Git LFS uploads to forks. They are fetched from a GitHub
+# Release asset of the source repository instead, which is unmetered, and
+# verified against a checksum.
+#
+# Override the source without editing this file:
+#   docker build --build-arg SEGMENTOR_WEIGHTS_URL=<url> -f dockerfile .
+FROM nvcr.io/nvidia/cuda:11.7.0-cudnn8-runtime-ubuntu20.04 AS weights
+
+ARG SEGMENTOR_WEIGHTS_URL=https://github.com/dzaridis/Prostate-Anatomies-and-Lesion-Segmentor/releases/download/v0.0.2/segmentor-weights.tar.gz
+ARG SEGMENTOR_WEIGHTS_SHA256=11d3039f6841a4769c6222e27164e0fe8bcaba45e4fae205cfd38df7e48272f5
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /opt/models && \
+    echo "Fetching model weights from ${SEGMENTOR_WEIGHTS_URL}" && \
+    curl -fSL --retry 3 --retry-delay 5 -o /tmp/weights.tar.gz "${SEGMENTOR_WEIGHTS_URL}" && \
+    echo "${SEGMENTOR_WEIGHTS_SHA256}  /tmp/weights.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/weights.tar.gz -C /opt/models && \
+    rm -f /tmp/weights.tar.gz && \
+    test -d /opt/models/nnUNet_results && test -d /opt/models/lesion
+
+# ---------- Stage 3: runtime ----------
+FROM nvcr.io/nvidia/cuda:11.7.0-cudnn8-runtime-ubuntu20.04
+
+LABEL org.opencontainers.image.title="prostate-anatomies-and-lesion-segmentor" \
+      org.opencontainers.image.version="2.1.0-fem" \
+      org.opencontainers.image.description="Prostate whole-gland, zonal (PZ/TZ) and lesion segmentation from prostate MRI using cascaded nnU-Net v2 + ProLesA-Net." \
+      org.opencontainers.image.source="https://github.com/dzaridis/Prostate-Anatomies-and-Lesion-Segmentor" \
+      org.opencontainers.image.licenses="EUPL-1.2" \
+      org.opencontainers.image.authors="Dimitrios Zaridis, FORTH <dimzaridis@gmail.com>"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    MODEL_DIR=/opt/models \
+    WORK_DIR=/tmp/nnunet_workdir \
+    # /usr/sbin and /sbin are required: entrypoint.sh calls gosu, useradd,
+    # usermod and groupadd by bare name and they all live there.
+    PATH=/opt/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/bin:/bin \
+    PYTHONPATH=/app
+
+# Default runtime identity. The platform overrides these at run time through
+# HOST_UID / HOST_GID / HOST_USER, which entrypoint.sh applies.
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        software-properties-common \
+        ca-certificates \
+        gosu \
+        passwd && \
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3.9 \
+        python3.9-distutils && \
+    /usr/sbin/groupadd -g ${USER_GID} eucaim && \
+    /usr/sbin/useradd  -r -u ${USER_UID} -g eucaim -d /home/eucaim -m -s /bin/bash eucaim && \
+    apt-get purge -y software-properties-common && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the fully resolved venv from the builder stage.
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy the verified model weights from the weights stage.
+COPY --from=weights /opt/models /opt/models
+
+WORKDIR /app
+COPY app/Utils /app/Utils
+COPY app/__main__.py /app/__main__.py
+COPY app/healthcheck.py /app/healthcheck.py
+COPY entrypoint.sh /app/entrypoint.sh
+
+# Only the writable directories need their mode adjusted. Deliberately NO
+# recursive chown/chmod over /opt/venv, /opt/models or /app: overlayfs cannot
+# record a metadata-only change, so `chown -R`/`chmod -R` copies every touched
+# file into a new layer and duplicates ~8.4 GB of venv and weights in the
+# image. pip and tar already write world-readable 644/755, which is all the
+# injected runtime UID needs.
+RUN mkdir -p ${WORK_DIR} /app/input_data /app/output_data && \
+    chmod 1777 ${WORK_DIR} /app/output_data && \
+    chmod 755 /app/entrypoint.sh
+
+# NOTE: no `USER` directive. entrypoint.sh starts as root so it can apply the
+# platform's HOST_UID/HOST_GID, then drops to that user with gosu. This is the
+# pattern mandated by tool_template; do not add `USER` back.
+
+HEALTHCHECK --interval=60s --timeout=10s --retries=3 \
+    CMD python /app/healthcheck.py || exit 1
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["--input", "/app/input_data", "--output", "/app/output_data"]
