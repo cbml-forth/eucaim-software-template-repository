@@ -1,4 +1,4 @@
-# FeaturesHarmonization
+# Radiomics Features Harmonization
 
 ## Description
 
@@ -6,6 +6,7 @@ The tool is designed to perform harmonization at the feature-level. The tool off
 1. ComBat method, which shifts the radiomics features to the overall mean and pooled variance of all centers, 
 2. M-ComBat method, which shifts the radiomics features to the mean and variance of the chosen reference center with the most samples. 
 
+[Original code repository](https://cbml-gitlab.ics.forth.gr/adovrou/featuresharmonization/)
 
 ### Input/output description:
 
@@ -32,7 +33,7 @@ docker run --rm \
  harmonization:1.5 /data/input /data/output [-h] [-M] [-c]
 ```
 
-where *your_input_path* is the folders path that containts the radiomics and the metadata csv files. *your_output_path* is the output dictory path where the harmonized radiomic features and the harmonization parameters files are stored.
+where *your_input_path* is the folders path that contains the radiomics and the metadata csv files. *your_output_path* is the output dictory path where the harmonized radiomic features and the harmonization parameters files are stored.
 
 The two mandatory arguments:
   * INPUT_DIR: the path that contains the radiomic features and the corresponding metadata of each patient.
@@ -46,6 +47,7 @@ Other available arguments:
                         If specified, the manufacturer Model variable instead of the (default)manufacturer variable will be used as center-effect.
   -c, --combat          If specified, the ComBat method will be used. If not, the M-ComBat method will be used.
 ```
+
 
 ## License
 

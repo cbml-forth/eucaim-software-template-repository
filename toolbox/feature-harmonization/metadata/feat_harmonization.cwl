@@ -7,7 +7,7 @@ doc: A Python tool that perform harmonization at the imaging feature-level, usin
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/feat_harmonization:1.5
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/feat_harmonization:1.5-fem
 
 inputs:
   input_dir:

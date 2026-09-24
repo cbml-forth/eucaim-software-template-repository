@@ -7,10 +7,10 @@ authors = [
     { name="Elisavet Stamoulou"},
     { name="Aikaterini Dovrou"}
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = [
-    "neurocombat>=0.2.12",
-    "numpy<2.0",
-    "pandas>=2.3.3",
-    "pydicom>=3.0.2",
+    "neurocombat==0.2.12",
+    "numpy==1.22.3",
+    "pandas==1.2.4",
+    "pydicom==2.3.0",
 ]
