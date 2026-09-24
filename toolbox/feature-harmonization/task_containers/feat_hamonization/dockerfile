@@ -1,0 +1,62 @@
+# Use a slim base image to significantly reduce image size
+FROM python:3.12-slim
+
+# Copy the uv binary directly from the official Astral image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Environment variables setup
+ENV DEBIAN_FRONTEND=noninteractive \
+    TF_CPP_MIN_LOG_LEVEL=3 \
+    KMP_AFFINITY=noverbose \
+    GIT_PYTHON_REFRESH=quiet \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
+
+# Set defaults for build arguments
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Create non-root user and group, and prevent login
+RUN groupadd -g $USER_GID eucaim && \
+    useradd -r -u $USER_UID -g eucaim -d /home/eucaim -m -s /usr/sbin/nologin eucaim
+
+# Install any necessary dependencies of your tool
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gosu \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Install system dependencies with cache mounting and cleanup
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    gosu \
+    build-essential \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+
+# Install Python dependencies first to maximize Docker layer caching
+COPY app/pyproject.toml app/uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+
+# Copy application files and model weights
+COPY app/harmonization.py ./
+
+# Ensure input and output directories exist
+RUN mkdir -p input_data output_data
+
+COPY ./entrypoint.sh entrypoint.sh
+
+# Set any necessary executable permissions for non-root user
+RUN chmod 755 /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["./input_data", "./output_data"]
