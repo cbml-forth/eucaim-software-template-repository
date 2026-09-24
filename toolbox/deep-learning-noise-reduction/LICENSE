@@ -1,23 +1,3 @@
-"Lethe" DICOM Anonymization Tool
-Copyright (c) 2025 CBML, FORTH-ICS
-
-Licensed under the European Union Public License (EUPL), Version 1.2
-or – as soon as they will be approved by the European Commission –
-subsequent versions of the EUPL.
-
-You may not use this work except in compliance with the License.
-You may obtain a copy of the License at:
-
-https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" basis,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
-See the License for the specific language governing permissions
-and limitations under the License.
-
-
                       EUROPEAN UNION PUBLIC LICENCE v. 1.2
                       EUPL © the European Union 2007, 2016
 
@@ -305,3 +285,4 @@ Code from exclusive appropriation.
 
 All other changes or additions to this Appendix require the production of a new
 EUPL version.
+

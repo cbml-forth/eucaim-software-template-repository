@@ -13,20 +13,20 @@ of the whole gland and of the transitional and peripheral zones.
 
 ### Paper
 
-D. Zaridis et al., "Region-adaptive magnetic resonance image enhancement for
-improving CNN-based segmentation of the prostate and prostatic zones",
+D. Zaridis et al., [Region-adaptive magnetic resonance image enhancement for
+improving CNN-based segmentation of the prostate and prostatic zones](https://www.nature.com/articles/s41598-023-27671-8),
 Scientific Reports 13, 714 (2023), doi: 10.1038/s41598-023-27671-8.
 
 ### keywords
 
-{Prostate;Magnetic resonance imaging;Image enhancement;CLAHE;Segmentation;Deep
-learning;U-Net;Prostatic zones}
+`Prostate`;`Magnetic resonance imaging`;`Image enhancement`;`CLAHE`;`Segmentation`;`Deep
+learning`;`U-Net`;`Prostatic zones`
 
 ## Guide
 
 First go to the dir, eg. `cd raclahe`
 
-Build container: `sudo docker build -t raclahe:3.0-fem -f dockerfile .`
+Build container: `docker build -t raclahe:3.0-fem -f dockerfile .`
 
 Run container:
 
