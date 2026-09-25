@@ -12,8 +12,6 @@ USER root
 ARG USER_UID=1000
 ARG USER_GID=1000
 
-ARG GIT_REPO_REF=0a1d8ec0e6f8c344c7751c9524c17eded86ad314
-
 # Create non-root user and group, and prevent login
 RUN groupadd -g $USER_GID eucaim && \
     useradd -r -u $USER_UID -g eucaim -d /home/ds -m -s /usr/sbin/nologin eucaim
@@ -35,10 +33,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # RUN python -m pip install --upgrade pip
 
 
-RUN git clone --branch eucaim --single-branch https://cbml-gitlab.ics.forth.gr/adovrou/n4biasfilter.git /home/ds/n4biasfilter && \
+RUN git clone --branch eucaim-fem --depth 1 --single-branch https://cbml-gitlab.ics.forth.gr/adovrou/n4biasfilter.git /home/ds/n4biasfilter && \
     cd /home/ds/n4biasfilter && \
-    git lfs pull && \
-    git -C /home/ds/n4biasfilter checkout ${GIT_REPO_REF}
+    git lfs pull
 
 WORKDIR /home/ds/n4biasfilter
 
@@ -51,9 +48,6 @@ WORKDIR /home/ds/n4biasfilter
 COPY app/pyproject.toml app/uv.lock* app/.python-version ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
-
-COPY app/main.patch ./ 
-RUN git apply main.patch
 
 COPY ./entrypoint.sh entrypoint.sh
 RUN chmod +x entrypoint.sh
