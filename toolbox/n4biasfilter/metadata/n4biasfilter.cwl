@@ -43,6 +43,7 @@ inputs:
   iterations:
     type: int
     doc: Number of iterations
+    default: 50
     required: false
     hidden: false
     source: user
@@ -53,6 +54,7 @@ inputs:
   threshold:
     type: float
     doc:  Convergence threshold
+    default: 0.001
     required: false
     hidden: false
     source: user
@@ -63,6 +65,7 @@ inputs:
   shrink_factor:
     type: int
     doc:  Shrink factor
+    default: 2
     required: false
     hidden: false
     source: user
@@ -73,6 +76,7 @@ inputs:
   fitting_level:
     type: int
     doc:  Fitting level
+    default: 5
     required: false
     hidden: false
     source: user
