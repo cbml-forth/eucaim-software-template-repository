@@ -1,0 +1,228 @@
+diff --git a/README.md b/README.md
+index 5d271ef..ce491c9 100644
+--- a/README.md
++++ b/README.md
+@@ -7,21 +7,45 @@ Two main options are offered to the user:
+ 1. Apply N4 filter to image/images (either with the default parameters values or with parameters values defined by the user) 
+ 2. Find the optimal configuration of the N4 filter for specific image/images by measuring the Full Width at Half Maximum (FWHM) of the periprostatic fat dstribution. 
+ 
++[Original code repository](https://cbml-gitlab.ics.forth.gr/adovrou/n4biasfilter),
++[eucauim-fem](https://cbml-gitlab.ics.forth.gr/adovrou/n4biasfilter/-/tree/eucaim-fem) branch
++
+ ### Description of input and output of the available options
+ 
+ ### Option 1. Apply N4 filter to images  
+ 
+ **Input**
+ 
+-The **required** input is the *images*, which should be in **DICOM** format. 
++The **required** input is the *images*, which should be in **DICOM** format.
++We assume that the given folder contains the patient images structured
++according to the DICOM convention of <patient-id>/<study-id>/<series-id>
++e.g. :
++
++        `folder`
++            |-- patient_id_1/
++            |       |-- study_uid_11/
++            |       |   |-- series_uid_111/
++            |       |       |-- instance_0001.dcm
++            |       |       |-- instance_0002.dcm
++            |       |       |-- ...
++            |       |-- ...
++            |-- patient_id_2/
++            |       |-- study_uid_21/
++            |       |   |-- series_uid_211/
++            |       |       |-- instance_0001.dcm
++            |       |       |-- instance_0002.dcm
++            |       |       |-- ...
++            |       |-- ...
++            |-- ...
+ 
+ At least two volumes are attached to the docker container in order to run the module.
+-The one volume of the docker container should be a path that contains the folders with the raw images. \
++The one volume of the docker container should be a path that contains the folders with the raw images.
+ The second volume of the docker container is an output path, which is the path that the N4 filtered images will be stored in the same format. 
+ 
+ **Output**
+ 
+-The output is the N4 filtered images, which are stored in the specified output path.
++The output is the N4 filtered images, which are stored in the specified output path in a subfolder named `N4_filtered`
++ using the same structure found in the input dir.
+ 
+ 
+ ## Option 2 Apply the whole pipeline to identify the optimal configuration of the N4 filter 
+diff --git a/src/main.py b/src/main.py
+index 0c25cab..10a3f3d 100644
+--- a/src/main.py
++++ b/src/main.py
+@@ -1,10 +1,11 @@
+-import os
+ import argparse
++import os
++import sys
++
+ from menu import *
+ from procancer_N4_filter import *
+ 
+-
+-if __name__ == '__main__':    
++if __name__ == "__main__":
+     parser = argparse.ArgumentParser()
+ 
+     parser.add_argument('INPUT_DIR', help='Input directory')
+@@ -18,7 +19,7 @@ if __name__ == '__main__':
+     parser.add_argument('-s', '--shrinkFactor', dest='s', type=int, default=env['N4_params_default']['shrink'], required=False, help='Shrink factor')
+     parser.add_argument('-f', '--fittingLevel', dest='f', type=int, default=env['N4_params_default']['fit'], required=False, help='Fitting level')
+     parser.add_argument('-I', '--Iterations', dest='I', type=int, default=env['N4_params_default']['iters'], required=False, help='Number of iterations')
+-    parser.add_argument('-m','--masks', dest='masks', action='store_true', required=False, help='If specified, the N4 algrithm uses masks')
++    parser.add_argument('-m','--masks', dest='masks', action='store_true', required=False, help='If specified, the N4 algorithm uses masks')
+     parser.add_argument('-c', '--custom-masks', dest='custom_masks', type=str, default=None, required=False, help='If specified, custom masks are used. If not specified, the masks will be extracted automatically by the algorithm.')
+ 
+     # whole pipeline
+@@ -30,22 +31,19 @@ if __name__ == '__main__':
+         path_in = args.INPUT_DIR  
+     else:
+         print(f"Invalid INPUT_DIR: {args.INPUT_DIR}")
+-        exit(-1)
++        sys.exit(-1)
+           
+     if os.path.exists(args.OUTPUT_DIR) and os.path.isdir(args.OUTPUT_DIR):
+         path_out = args.OUTPUT_DIR
+     else:
+         print(f"Invalid OUTPUT_DIR: {args.OUTPUT_DIR}")
+-        exit(-1) 
++        sys.exit(-1) 
+ 
+     
+     custom_masks = False
+     if args.custom_masks is not None and os.path.exists(args.custom_masks) and os.path.isdir(args.custom_masks):
+         custom_masks = True
+         path_mask = args.custom_masks
+-    else:
+-        print(f"Invalid custom_masks dir: {args.custom_masks}")
+-        exit(-1) 
+     
+     if args.interactive:
+         try:
+@@ -64,6 +62,5 @@ if __name__ == '__main__':
+             print(e)
+     else: 
+         print('No functionality was selected. Please select one of the available options (see -h).')
+-        exit()
++        sys.exit()
+     
+-    
+\ No newline at end of file
+diff --git a/src/procancer_N4_filter/N4filter.py b/src/procancer_N4_filter/N4filter.py
+index e9c2c52..f4e0e76 100644
+--- a/src/procancer_N4_filter/N4filter.py
++++ b/src/procancer_N4_filter/N4filter.py
+@@ -3,6 +3,7 @@
+     @email: dovrou@ics.forth.gr
+     @project: ProCAncer-I
+ """
++from pathlib import Path
+ from itertools import count
+ import numpy as np
+ import SimpleITK as sitk
+@@ -236,7 +237,7 @@ def apply_N4_from_path(path_in, path_out, path_mask=None, thres: float=env['N4_p
+     base_path_in = path_in
+     base_path_out = f"{path_out}/N4_filtered"
+     # patients_path = glob.glob(base_path_in+"/*")
+-    patients_path = read_json_get_input_paths(path_in)
++    patients_path = series_paths_in_folder(path_in)
+ 
+     if custom_mask == True:
+         masks_path = glob.glob(path_mask+"/*")
+@@ -266,9 +267,9 @@ def apply_N4_from_path(path_in, path_out, path_mask=None, thres: float=env['N4_p
+             print('Loading masks...')
+ 
+     for count, p in enumerate(patients_path):
+-        folder = p.split(os.sep)[-1]
++        parent_folder, folder = p.rsplit(os.sep, 1)
+         folder_names.append(folder)
+-        study_folder_names.append(p.split(os.sep)[-2])
++        study_folder_names.append(parent_folder)
+         
+         files = glob.glob(os.path.join(p,"*"))
+         if len(files) == 0:
+@@ -405,7 +406,8 @@ def apply_N4_from_path(path_in, path_out, path_mask=None, thres: float=env['N4_p
+ 
+     for i in range(N4_corrected_imgs.shape[0]):
+ 
+-        pat_path_out = f"{base_path_out}/{study_folder_names[i]}/{folder_names[i]}" 
++        out_subpath = Path(study_folder_names[i]).relative_to(Path(path_in))
++        pat_path_out = f"{base_path_out}/{out_subpath}/{folder_names[i]}" 
+         if not os.path.exists(pat_path_out):
+             os.makedirs(pat_path_out)
+ 
+@@ -433,4 +435,4 @@ def apply_N4_from_path(path_in, path_out, path_mask=None, thres: float=env['N4_p
+             
+   
+ 
+-    
+\ No newline at end of file
++
+diff --git a/src/procancer_N4_filter/statistics.py b/src/procancer_N4_filter/statistics.py
+index 1eb4a68..1f31d98 100644
+--- a/src/procancer_N4_filter/statistics.py
++++ b/src/procancer_N4_filter/statistics.py
+@@ -257,7 +257,7 @@ def apply_N4_pipeline_from_path(path_in, path_out, path_mask, custom_mask=False)
+     base_path_in = path_in
+     base_path_out = f"{path_out}/Optimal_settings"
+     # patients_path = glob.glob(base_path_in+"/*")
+-    patients_path = read_json_get_input_paths(path_in)
++    patients_path = series_paths_in_folder(path_in)
+ 
+     if custom_mask == True:
+         masks_path = glob.glob(path_mask+"/*")
+@@ -449,4 +449,4 @@ def apply_N4_pipeline_from_path(path_in, path_out, path_mask, custom_mask=False)
+     print("Execution completed!\n")
+     
+     return mask, thres, shrink, fit, iters, thresholding
+-        
+\ No newline at end of file
++        
+diff --git a/src/procancer_N4_filter/utils.py b/src/procancer_N4_filter/utils.py
+index e29fc5a..085eb89 100644
+--- a/src/procancer_N4_filter/utils.py
++++ b/src/procancer_N4_filter/utils.py
+@@ -149,4 +149,36 @@ def read_json_get_input_paths(path: str):
+             serie_dir_path = os.path.join(path, study["path"], series["folderName"])
+             paths.append(serie_dir_path)
+     
+-    return paths
+\ No newline at end of file
++    return paths
++
++def series_paths_in_folder(folder: str):
++    """
++        A "hacky" function to return all the series folders below the given `folder`
++
++        We assume that the given folder contains the patient images structured
++        according to the DICOM convention of <patient-id>/<study-id>/<series-id>
++        e.g. :
++
++        `folder`
++            |-- patient_id_1/
++            |       |-- study_uid_11/
++            |       |   |-- series_uid_111/
++            |       |       |-- instance_0001.dcm
++            |       |       |-- instance_0002.dcm
++            |       |       |-- ...
++            |       |-- ...
++            |-- patient_id_2/
++            |       |-- study_uid_21/
++            |       |   |-- series_uid_211/
++            |       |       |-- instance_0001.dcm
++            |       |       |-- instance_0002.dcm
++            |       |       |-- ...
++            |       |-- ...
++            |-- ...
++
++    """
++    from pathlib import Path
++    p = Path(folder)
++    s = {i.parent for i in p.rglob("*") if not i.is_dir()}
++    return [str(i) for i in s]
++

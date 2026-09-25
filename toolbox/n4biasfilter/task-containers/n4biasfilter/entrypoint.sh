@@ -58,4 +58,4 @@ fi
 
 echo_msg "Launching app as $HOST_USER ($HOST_UID:$HOST_GID) at $(pwd)"
 
-exec gosu "$HOST_USER" /app/.venv/bin/python src/main.py "$@"
+exec gosu "$HOST_USER" python src/main.py "$@"
