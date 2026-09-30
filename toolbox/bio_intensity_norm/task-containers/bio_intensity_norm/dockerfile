@@ -1,0 +1,50 @@
+FROM python:3.12-slim
+
+LABEL name="biointensitynorm"
+LABEL version="1.7"
+
+# Copy the uv binary directly from the official Astral image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+USER root
+
+# Set defaults for build arguments
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Create non-root user and group, and prevent login
+RUN groupadd -g $USER_GID eucaim && \
+    useradd -r -u $USER_UID -g eucaim -d /home/ds -m -s /usr/sbin/nologin eucaim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TF_CPP_MIN_LOG_LEVEL=3 \
+    KMP_AFFINITY=noverbose \
+    GIT_PYTHON_REFRESH=quiet \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_NO_MANAGED_PYTHON=1 \
+    PATH="/home/ds/biointensitynorm/.venv/bin:$PATH"
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+     ffmpeg libsm6 libxext6 git \
+     gosu build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+
+RUN git clone --branch eucaim --depth 1 --single-branch https://cbml-gitlab.ics.forth.gr/adovrou/biointensitynorm.git /home/ds/biointensitynorm && \
+    cd /home/ds/biointensitynorm && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+WORKDIR /home/ds/biointensitynorm
+
+
+# COPY app/pyproject.toml app/uv.lock* app/.python-version ./
+# RUN --mount=type=cache,target=/root/.cache/uv \
+#     uv sync --frozen --no-install-project --no-dev
+
+COPY ./entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
+
+
+ENTRYPOINT ["/home/ds/biointensitynorm/entrypoint.sh"]
