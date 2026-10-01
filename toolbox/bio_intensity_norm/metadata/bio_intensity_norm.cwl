@@ -1,7 +1,7 @@
 cwlVersion: v1.2
 class: FEMTask
 
-id: n4biasfilter
+id: bio_intensity_norm
 label: Biologically motivated normalization techniques
 doc: >
   The tool is designed to perform normalization at the image-level. This
@@ -57,24 +57,15 @@ inputs:
     inputBinding:
       position: 4
       prefix: -f
-  
-  piece_wise:
-    type: boolean
-    doc: If specified, the single tissue piece-wise normalization algorithm is applied
-    default: true
-    required: false
-    hidden: false
-    inputBinding:
-      position: 5
-      prefix: -p
+
 
 
 outputs:
-  n4_filtered_dir:
+  normalized_output_dir:
     type: Directory
-    doc: Output directory containing N4 filtered image in a similar structure as the input
+    doc: Output directory containing normalized images
     outputBinding:
-      glob: $(inputs.output_dir)/N4_filtered
+      glob: $(inputs.output_dir)
 
 baseCommand: [] # entrypoint has the `python src/main.py` command so you just need to pass the additional parameters only
 
