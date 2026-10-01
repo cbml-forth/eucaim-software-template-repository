@@ -15,7 +15,7 @@ doc: >
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/n4filter:fem
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/bio_intensity_norm:1.7-fem
 
 inputs:
   input_dir:
