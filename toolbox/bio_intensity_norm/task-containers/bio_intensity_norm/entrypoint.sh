@@ -36,7 +36,7 @@ if id -u "$HOST_USER" >/dev/null 2>&1; then
   if [ "$CURRENT_UID" -ne "$HOST_UID" ]; then
     if [ -n "$EXISTING_UID_USER" ] && [ "$EXISTING_UID_USER" != "$HOST_USER" ]; then
       FREE_UID=$(awk -F: '{print $3}' /etc/passwd | sort -n | awk 'BEGIN{n=2000} {if ($1==n) n++} END{print n}')
-      >&2 echo "UID $HOST_UID already taken by user $EXISTING_UID_USER, reassigning to $FREE_UID"
+      echo_msg "UID $HOST_UID already taken by user $EXISTING_UID_USER, reassigning to $FREE_UID"
       usermod -u "$FREE_UID" "$EXISTING_UID_USER"
     fi
     echo_msg "Updating UID of $HOST_USER to $HOST_UID"
@@ -48,7 +48,7 @@ else
     echo_msg "UID $HOST_UID already taken by user $EXISTING_UID_USER, reassigning to $FREE_UID"
     usermod -u "$FREE_UID" "$EXISTING_UID_USER"
   fi
-  >&2 echo "Creating user $HOST_USER with UID $HOST_UID and GID $HOST_GID"
+  echo_msg "Creating user $HOST_USER with UID $HOST_UID and GID $HOST_GID"
   useradd -m -u "$HOST_UID" -g "$HOST_GID" -s /bin/bash "$HOST_USER"
 fi
 

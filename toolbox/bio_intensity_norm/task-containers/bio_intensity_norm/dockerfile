@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM debian:trixie-slim
 
 LABEL name="biointensitynorm"
 LABEL version="1.7"
@@ -19,32 +19,29 @@ RUN groupadd -g $USER_GID eucaim && \
 ENV DEBIAN_FRONTEND=noninteractive \
     TF_CPP_MIN_LOG_LEVEL=3 \
     KMP_AFFINITY=noverbose \
-    GIT_PYTHON_REFRESH=quiet \
-    UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    UV_NO_MANAGED_PYTHON=1 \
-    PATH="/home/ds/biointensitynorm/.venv/bin:$PATH"
+    GIT_PYTHON_REFRESH=quiet
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-     ffmpeg libsm6 libxext6 git \
-     gosu build-essential \
+    ffmpeg libsm6 libxext6 \
+    git \
+    gosu \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN git clone --branch eucaim --depth 1 --single-branch https://cbml-gitlab.ics.forth.gr/adovrou/biointensitynorm.git /home/ds/biointensitynorm && \
-    cd /home/ds/biointensitynorm && \
-    pip install --no-cache-dir -r requirements.txt
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
+
+RUN git clone --branch eucaim-fem --depth 1 --single-branch https://cbml-gitlab.ics.forth.gr/adovrou/biointensitynorm.git /app && \
+    cd /app && \
+    uv sync --frozen --no-install-project --no-dev
 
 
-WORKDIR /home/ds/biointensitynorm
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
+WORKDIR /app
 
-# COPY app/pyproject.toml app/uv.lock* app/.python-version ./
-# RUN --mount=type=cache,target=/root/.cache/uv \
-#     uv sync --frozen --no-install-project --no-dev
-
-COPY ./entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
-
-
-ENTRYPOINT ["/home/ds/biointensitynorm/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
