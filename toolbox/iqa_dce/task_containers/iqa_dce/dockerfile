@@ -1,0 +1,53 @@
+FROM python:3.10.13-slim
+
+LABEL name="IQA_DCE_tool"
+LABEL version="1.1"
+
+# Install C/C++ build tools required to compile pyradiomics extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    gosu \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+
+# Set defaults for build arguments
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+# Create non-root user and group, and prevent login
+RUN groupadd -g $USER_GID eucaim && \
+    useradd -r -u $USER_UID -g eucaim -d /home/ds -m -s /usr/sbin/nologin eucaim
+
+# Pre-upgrade core packaging tools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Leverage Docker layer caching: install requirements before copying code
+COPY app/iqa_dce_tool_EUCAIM/requirements.txt ./requirements.txt
+
+# Pre-install numpy & build helpers, then install pyradiomics without isolation
+RUN pip install --no-cache-dir numpy==1.26.4 versioneer
+RUN pip install --no-cache-dir --no-build-isolation pyradiomics
+
+# Install remaining dependencies from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Ensure the PyTorch cache directory exists before copying checkpoint weights
+RUN mkdir -p /root/.cache/torch/hub/checkpoints
+
+# Fix the casing warning on COPY
+COPY app/brisque_svm_weights.pt /root/.cache/torch/hub/checkpoints/brisque_svm_weights.pt
+COPY app/brisque_svm_weights.pt /home/ds/.cache/torch/hub/checkpoints/brisque_svm_weights.pt
+
+# Copy project files
+COPY app/iqa_dce_tool_EUCAIM/ ./
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app
+
+ENTRYPOINT ["/entrypoint.sh"]
