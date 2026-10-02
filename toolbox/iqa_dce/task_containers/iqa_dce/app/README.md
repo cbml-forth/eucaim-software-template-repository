@@ -56,11 +56,20 @@ iqa_dce_tool:1.1 \
 
 If used in a research project please cite the following article:
 
-```
- Ioannidis, G.S.; Nikiforaki, K.; Dovrou, A.; Kilintzis, V.; Kalliatakis,
-G.; Diaz, O.; Lekadir, K.; Marias, K. Explainable Radiomics-Based Model for
-Automatic Image Quality Assessment in Breast Cancer DCE MRI Data. J. Imaging
-2025, 11, 417. https://doi.org/10.3390/jimaging11110417
+```bibtex
+@Article{jimaging11110417,
+ AUTHOR = {Ioannidis, Georgios S. and Nikiforaki, Katerina and Dovrou, Aikaterini and Kilintzis, Vassilis and Kalliatakis, Grigorios and Diaz, Oliver and Lekadir, Karim and Marias, Kostas},
+ TITLE = {Explainable Radiomics-Based Model for Automatic Image Quality Assessment in Breast Cancer DCE MRI Data},
+ JOURNAL = {Journal of Imaging},
+ VOLUME = {11},
+ YEAR = {2025},
+ NUMBER = {11},
+ ARTICLE-NUMBER = {417},
+ URL = {https://www.mdpi.com/2313-433X/11/11/417},
+ PubMedID = {41295134},
+ ISSN = {2313-433X},
+ DOI = {10.3390/jimaging11110417}
+}
 ```
 
 ## License
