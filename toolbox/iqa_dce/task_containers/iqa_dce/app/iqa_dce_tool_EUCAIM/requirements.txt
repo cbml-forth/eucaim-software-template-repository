@@ -1,0 +1,12 @@
+pip==25.3
+numpy==1.26.4
+pandas==2.2.3
+pillow==11.1.0
+piq==0.8.0
+PyWavelets==1.8.0
+scipy==1.15.1
+SimpleITK==2.4.1
+six==1.16.0
+torch==2.5.1
+#pyradiomics
+scikit-learn
