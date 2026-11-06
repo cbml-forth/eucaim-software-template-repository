@@ -13,3 +13,4 @@ quality features, and detects highly correlated and lexically similar pairs of f
 
 * Pezoulas, Vasileios C., et al. [Medical data quality assessment: On the development of an automated framework for medical data curation.](https://www.sciencedirect.com/science/article/pii/S0010482519300733) Computers in biology and medicine 107 (2019): 270-283.
 * [Source repository](https://github.com/vpz4/TDC)
+* [bio.tools record](https://bio.tools/tabular_data_curator)

@@ -58,13 +58,9 @@ fi
 chown -R "$HOST_UID:$HOST_GID" /app/output_data || true
 
 # -------------------------
-# 4. Switch to host user and run the requested command
+# 4. Switch to host user and run main.py (CWL passes only the flags)
 # -------------------------
-
-if [ "$#" -eq 0 ]; then
-  set -- bash
-fi
 
 echo_msg "Launching app as $HOST_USER ($HOST_UID:$HOST_GID)"
 
-exec gosu "$HOST_USER" "$@"
+exec gosu "$HOST_USER" python3 main.py "$@"

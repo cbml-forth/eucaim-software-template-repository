@@ -48,4 +48,4 @@ RUN chown -R root:root /app && chmod 755 /app/main.py /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-CMD ["python3", "main.py", "-i", "/app/input_data", "-o", "/app/output_data"]
+CMD ["-i", "/app/input_data", "-o", "/app/output_data"]

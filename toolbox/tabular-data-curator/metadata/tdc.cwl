@@ -7,7 +7,7 @@ doc: A Python tool for data quality evaluation, curation and similarity detectio
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tabular-data-curator:latest
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:fem
 
 inputs:
   input_dir:
@@ -89,7 +89,7 @@ baseCommand: [python3, main.py]
 expectedExitCode: 0
 
 metadata:
-  author: Vasileios C. Pezoulas
+  author: Vasileios C. Pezoulas, Nikolaos Tachos
   version: "1.0"
   orchestrator:
     network: overlay
