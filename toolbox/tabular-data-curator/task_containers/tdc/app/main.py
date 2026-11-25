@@ -2474,7 +2474,7 @@ def main():
     parser.add_argument(
         "--outlier-method", type=int, default=1, choices=range(1, 8),
         help="Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, "
-             "5=Local Outlier Factor, 6=Isolation Forests, 7=Isolation Forests (mod.). Default: 1."
+             "5=Local Outlier Factor (currently disabled), 6=Isolation Forests, 7=Isolation Forests (mod.). Default: 1."
     )
     parser.add_argument(
         "--similarity-method", type=int, default=1, choices=range(1, 6),

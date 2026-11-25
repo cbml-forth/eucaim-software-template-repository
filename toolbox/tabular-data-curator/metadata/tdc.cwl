@@ -37,7 +37,7 @@ inputs:
 
   outlier_method:
     type: int
-    doc: "Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, 5=Local Outlier Factor, 6=Isolation Forests, 7=Isolation Forests (mod.)"
+    doc: "Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, 5=Local Outlier Factor (currently disabled), 6=Isolation Forests, 7=Isolation Forests (mod.)"
     default: 1
     required: false
     hidden: false
