@@ -2426,10 +2426,18 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+CDM_CLINICAL_VIEW = "clinical_mandatory_view.csv"
+
+
 def resolve_input_file(input_path):
-    """Accepts either a direct path to a dataset file, or a directory
-    containing exactly one supported dataset file (.csv/.json/.xlsx/...)."""
+    """Accepts a direct path to a dataset file, a EUCAIM CDM dataset directory
+    (its flat clinical summary, clinical_mandatory_view.csv, is curated), or a
+    directory containing exactly one supported dataset file (.csv/.json/.xlsx/...)."""
     if os.path.isdir(input_path):
+        cdm_view = os.path.join(input_path, CDM_CLINICAL_VIEW)
+        if os.path.isfile(cdm_view):
+            print(f"EUCAIM CDM dataset detected, curating {cdm_view}", file=sys.stderr)
+            return cdm_view
         candidates = sorted(
             f for f in os.listdir(input_path)
             if allowed_file(f) and os.path.isfile(os.path.join(input_path, f))
@@ -2466,7 +2474,7 @@ def main():
     parser.add_argument(
         "--outlier-method", type=int, default=1, choices=range(1, 8),
         help="Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, "
-             "5=Local Outlier Factor, 6=Isolation Forests, 7=Isolation Forests (mod.). Default: 1."
+             "5=Local Outlier Factor (currently disabled), 6=Isolation Forests, 7=Isolation Forests (mod.). Default: 1."
     )
     parser.add_argument(
         "--similarity-method", type=int, default=1, choices=range(1, 6),

@@ -23,33 +23,35 @@ tabular-data-curator/
 │   └── README.md              # short summary, contacts and links
 ├── task_containers/
 │   └── tdc/
-│       ├── dockerfile
-│       ├── entrypoint.sh
+│       ├── dockerfile         # ENTRYPOINT ["python3", "/app/main.py"], no CMD
 │       └── app/
 │           ├── main.py        # CLI entry point + all TDC processing logic
 │           └── requirements.txt
 ├── metadata/
-│   └── tdc.cwl                # FEM task descriptor
+│   └── FEM/
+│       └── tdc.cwl            # FEM task descriptor (baseCommand = Dockerfile ENTRYPOINT)
 └── test/
-    ├── example_input/
-    │   └── test.csv
+    ├── generate_example_input.py   # regenerates the synthetic test case
+    ├── example_input/              # synthetic EUCAIM CDM dataset (30 patients)
+    │   └── clinical_mandatory_view.csv
     └── example_output/
-        ├── description.md     # notes on non-deterministic output fields
-        └── ...                # reference reports for test.csv
+        ├── description.md          # test case contents and determinism notes
+        └── ...                     # reference reports for the example input
 ```
 
 ### Input & Output
 
 * **Input**: a single tabular dataset in `.csv`, `.xlsx` or `.json` format, passed via `-i`. The
-  `-i` argument accepts either a direct file path, or a directory containing exactly one supported
-  dataset file (the latter matches how EUCAIM mounts a node's data folder).
+  `-i` argument accepts a direct file path, a EUCAIM CDM dataset directory (TDC then curates its
+  flat clinical summary, `clinical_mandatory_view.csv`), or a directory containing exactly one
+  supported dataset file.
 * **Output**: written to the directory passed via `-o`:
   * a data quality evaluation report (`*_evaluation_report.xlsx`) summarising metadata and
     feature-level diagnostics,
   * a curated dataset (`*_curated_dataset.xlsx`) - the original dataset with problematic fields
     (e.g. outliers, missing values, inconsistencies) highlighted using colour coding,
   * a clean curated dataset (`*_curated_dataset_clean.xlsx`) - the curated dataset with
-    low-quality features (>30% missing values) automatically removed,
+    low-quality features (≥70% missing values) automatically removed,
   * a similarity report (`*_similarity_report_corr.xlsx`) summarising highly correlated pairs of
     features (if any),
   * a similarity report (`*_similarity_report_lex.xlsx`) summarising lexically similar pairs of
@@ -89,24 +91,17 @@ cd task_containers/tdc
 docker build -t tabular-data-curator .
 ```
 
-Run the container against the example dataset:
+Run the container against the example dataset. The image's exec-form ENTRYPOINT is
+`python3 /app/main.py` (the same as `baseCommand` in the CWL), so only the CLI flags are passed.
+There is no entrypoint script: the runtime user is whoever starts the container, e.g. `--user`:
 
 ```bash
-docker run --rm \
+docker run --rm --user "$(id -u):$(id -g)" \
   -v $(pwd)/../../test/example_input:/app/input_data:ro \
   -v $(pwd)/../../test/example_output:/app/output_data \
-  tabular-data-curator
-```
-
-Or pass parameters explicitly:
-
-```bash
-docker run --rm \
-  -v $(pwd)/../../test/example_input:/app/input_data:ro \
-  -v $(pwd)/../../test/example_output:/app/output_data \
-  tabular-data-curator python3 main.py \
+  tabular-data-curator \
   -i /app/input_data -o /app/output_data \
-  --outlier-method 2 --similarity-method 1 --imputation-method 1
+  --outlier-method 1 --similarity-method 1 --imputation-method 1
 ```
 
 Running outside Docker (e.g. for development):

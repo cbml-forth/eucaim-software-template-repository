@@ -7,12 +7,12 @@ doc: A Python tool for data quality evaluation, curation and similarity detectio
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:fem
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.2
 
 inputs:
   input_dir:
     type: Directory
-    doc: Directory containing exactly one input dataset file (.csv, .json or .xlsx)
+    doc: EUCAIM CDM dataset directory (clinical_mandatory_view.csv is curated) or a directory containing exactly one dataset file (.csv, .json or .xlsx)
     required: true
     default: /app/input_data
     hidden: false
@@ -37,7 +37,7 @@ inputs:
 
   outlier_method:
     type: int
-    doc: "Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, 5=Local Outlier Factor, 6=Isolation Forests, 7=Isolation Forests (mod.)"
+    doc: "Outlier detection method: 1=z-score, 2=z-score (mod.), 3=IQR, 4=Grubb's test, 5=Local Outlier Factor (currently disabled), 6=Isolation Forests, 7=Isolation Forests (mod.)"
     default: 1
     required: false
     hidden: false
@@ -84,12 +84,12 @@ outputs:
     outputBinding:
       glob: $(inputs.output_dir_name)
 
-baseCommand: [python3, main.py]
+baseCommand: [python3, /app/main.py] # exactly the Dockerfile ENTRYPOINT
 
 expectedExitCode: 0
 
 metadata:
   author: Vasileios C. Pezoulas, Nikolaos Tachos
-  version: "1.0"
+  version: "1.2"
   orchestrator:
     network: overlay

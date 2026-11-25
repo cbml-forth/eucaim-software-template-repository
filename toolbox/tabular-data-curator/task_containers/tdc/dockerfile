@@ -3,30 +3,27 @@ FROM python:3.9-slim
 
 # Maintainer information
 LABEL maintainer="bpezoulas@gmail.com"
-LABEL version="1.0"
+LABEL version="1.2"
 LABEL description="TDC (Tabular Data Curation) - data quality evaluation, curation and similarity detection for tabular datasets"
-LABEL image.version="1.0"
+LABEL image.version="1.2"
 LABEL image.source="https://github.com/vpz4/TDC"
 
+# All runtime setup is done through ENV (no entrypoint script): the FEM replaces the ENTRYPOINT,
+# and the runtime user is set by whoever starts the container (FEM, Jobman or by hand), so HOME
+# and the matplotlib cache point to /tmp, which any UID can write to.
 ENV PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
-
-# Set defaults for build arguments
-ARG USER_UID=1000
-ARG USER_GID=1000
-
-# Create non-root user and group, and prevent login
-RUN groupadd -g $USER_GID eucaim && \
-    useradd -r -u $USER_UID -g eucaim -d /home/eucaim -m -s /usr/sbin/nologin eucaim
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    HOME=/tmp \
+    MPLCONFIGDIR=/tmp/matplotlib
 
 # Install system dependencies required to build the Python scientific stack
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gosu \
+    apt-get install -y --no-install-recommends \
     build-essential g++ gcc make \
     libfftw3-dev libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory (placeholder, overridden at runtime)
 WORKDIR /app
 
 # Install Python dependencies first to maximize Docker layer caching
@@ -36,16 +33,10 @@ RUN python -m pip install --upgrade pip "setuptools<81" wheel \
  && pip install --no-cache-dir cython numpy \
  && pip install --no-cache-dir -r requirements.txt
 
-# Copy the application source code
-COPY ./app/ /app/
-COPY ./entrypoint.sh /app/entrypoint.sh
+# Copy the application source code (read-only for the runtime user; reports go to -o)
+COPY ./app/main.py ./app/requirements.txt /app/
+RUN chmod 755 /app/main.py
 
-# Ensure default input/output directories exist
-RUN mkdir -p /app/input_data /app/output_data
-
-# Set any necessary executable permissions for non-root user
-RUN chown -R root:root /app && chmod 755 /app/main.py /app/entrypoint.sh
-
-ENTRYPOINT ["/app/entrypoint.sh"]
-
-CMD ["-i", "/app/input_data", "-o", "/app/output_data"]
+# Base command as exec-form ENTRYPOINT, no CMD. The CWL baseCommand is exactly the same:
+# baseCommand: [python3, /app/main.py]
+ENTRYPOINT ["python3", "/app/main.py"]
