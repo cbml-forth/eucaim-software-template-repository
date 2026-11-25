@@ -23,13 +23,13 @@ tabular-data-curator/
 │   └── README.md              # short summary, contacts and links
 ├── task_containers/
 │   └── tdc/
-│       ├── dockerfile
-│       ├── entrypoint.sh
+│       ├── dockerfile         # ENTRYPOINT ["python3", "/app/main.py"], no CMD
 │       └── app/
 │           ├── main.py        # CLI entry point + all TDC processing logic
 │           └── requirements.txt
 ├── metadata/
-│   └── tdc.cwl                # FEM task descriptor
+│   └── FEM/
+│       └── tdc.cwl            # FEM task descriptor (baseCommand = Dockerfile ENTRYPOINT)
 └── test/
     ├── generate_example_input.py   # regenerates the synthetic test case
     ├── example_input/              # synthetic EUCAIM CDM dataset (30 patients)
@@ -91,11 +91,12 @@ cd task_containers/tdc
 docker build -t tabular-data-curator .
 ```
 
-Run the container against the example dataset. The entrypoint runs `python3 main.py`, so only the
-CLI flags are passed (as the FEM does with `baseCommand: []`):
+Run the container against the example dataset. The image's exec-form ENTRYPOINT is
+`python3 /app/main.py` (the same as `baseCommand` in the CWL), so only the CLI flags are passed.
+There is no entrypoint script: the runtime user is whoever starts the container, e.g. `--user`:
 
 ```bash
-docker run --rm \
+docker run --rm --user "$(id -u):$(id -g)" \
   -v $(pwd)/../../test/example_input:/app/input_data:ro \
   -v $(pwd)/../../test/example_output:/app/output_data \
   tabular-data-curator \

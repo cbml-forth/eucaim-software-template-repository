@@ -17,13 +17,14 @@ Categorical features with missing values are also reported as `unknown type of d
 cannot infer a single type for them. The similarity reports are empty: the CDM view has only one
 numeric feature and no lexically similar feature names.
 
-The reference outputs were produced with the CWL defaults, passing only the CLI flags:
+The reference outputs were produced with the CWL defaults (the image ENTRYPOINT is the CWL
+`baseCommand`, `python3 /app/main.py`, so only the CLI flags are passed):
 
 ```bash
-docker run --rm \
+docker run --rm --user "$(id -u):$(id -g)" \
   -v $(pwd)/test/example_input:/app/input_data:ro \
   -v $(pwd)/test/example_output:/app/output_data \
-  harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.1-fem \
+  harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.2 \
   -i /app/input_data -o /app/output_data \
   --outlier-method 1 --similarity-method 1 --imputation-method 1
 ```

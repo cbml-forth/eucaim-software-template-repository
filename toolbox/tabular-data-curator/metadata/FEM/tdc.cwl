@@ -7,7 +7,7 @@ doc: A Python tool for data quality evaluation, curation and similarity detectio
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.1-fem
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.2
 
 inputs:
   input_dir:
@@ -84,12 +84,12 @@ outputs:
     outputBinding:
       glob: $(inputs.output_dir_name)
 
-baseCommand: [] # entrypoint runs `python3 main.py`, so only the CLI flags are passed
+baseCommand: [python3, /app/main.py] # exactly the Dockerfile ENTRYPOINT
 
 expectedExitCode: 0
 
 metadata:
   author: Vasileios C. Pezoulas, Nikolaos Tachos
-  version: "1.1"
+  version: "1.2"
   orchestrator:
     network: overlay
