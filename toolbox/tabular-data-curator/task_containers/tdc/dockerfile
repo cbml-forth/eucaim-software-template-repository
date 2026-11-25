@@ -3,9 +3,9 @@ FROM python:3.9-slim
 
 # Maintainer information
 LABEL maintainer="bpezoulas@gmail.com"
-LABEL version="1.0"
+LABEL version="1.1"
 LABEL description="TDC (Tabular Data Curation) - data quality evaluation, curation and similarity detection for tabular datasets"
-LABEL image.version="1.0"
+LABEL image.version="1.1"
 LABEL image.source="https://github.com/vpz4/TDC"
 
 ENV PYTHONUNBUFFERED=1 \
@@ -46,6 +46,6 @@ RUN mkdir -p /app/input_data /app/output_data
 # Set any necessary executable permissions for non-root user
 RUN chown -R root:root /app && chmod 755 /app/main.py /app/entrypoint.sh
 
+# Exec-form ENTRYPOINT: entrypoint.sh switches to the host user and runs
+# `python3 main.py "$@"`, so the FEM (CWL baseCommand: []) passes only the CLI flags.
 ENTRYPOINT ["/app/entrypoint.sh"]
-
-CMD ["-i", "/app/input_data", "-o", "/app/output_data"]

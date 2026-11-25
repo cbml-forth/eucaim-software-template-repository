@@ -7,12 +7,12 @@ doc: A Python tool for data quality evaluation, curation and similarity detectio
 
 requirements:
   - class: DockerRequirement
-    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:fem
+    dockerPull: harbor.eucaim.cancerimage.eu/processing-tools/tdc-app:1.1-fem
 
 inputs:
   input_dir:
     type: Directory
-    doc: Directory containing exactly one input dataset file (.csv, .json or .xlsx)
+    doc: EUCAIM CDM dataset directory (clinical_mandatory_view.csv is curated) or a directory containing exactly one dataset file (.csv, .json or .xlsx)
     required: true
     default: /app/input_data
     hidden: false
@@ -84,12 +84,12 @@ outputs:
     outputBinding:
       glob: $(inputs.output_dir_name)
 
-baseCommand: [python3, main.py]
+baseCommand: [] # entrypoint runs `python3 main.py`, so only the CLI flags are passed
 
 expectedExitCode: 0
 
 metadata:
   author: Vasileios C. Pezoulas, Nikolaos Tachos
-  version: "1.0"
+  version: "1.1"
   orchestrator:
     network: overlay
